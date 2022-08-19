@@ -9,7 +9,8 @@ const updateCompiler = require("./updateCompiler");
 class Server {
     constructor(compiler) {
         this.compiler = compiler;
-        updateCompiler(compiler);// 更改config的entry属性，增加client/index.js和hot/dev-server.js
+        // 1.更改config中的entry属性：将lib/client/index.js、lib/client/hot/dev-server.js注入到打包输出的chunk文件中
+        updateCompiler(compiler);
         this.currentHash;// 编译hash
         this.clientSocketList = [];// 客户端集合
         this.fs;// 文件系统
@@ -25,13 +26,13 @@ class Server {
         this.createServer();// 创建静态服务器
         this.createSocketServer();// 创建websocket服务器
     }
+    // 2.监听本地文件的变化、文件改变自动编译、编译输出 每当新一个编译完成后都会向客户端发送消息
     setupHooks() {
         let { compiler } = this;
         compiler.hooks.done.tap("webpack-dev-server", (stats) => {
             console.log("stats.hash", stats.hash);
 
             this.currentHash = stats.hash;
-            //每当新一个编译完成后都会向客户端发送消息
             this.clientSocketList.forEach(socket => {
                 // 发送最新的hash
                 socket.emit("hash", this.currentHash);
@@ -40,7 +41,7 @@ class Server {
             });
         });
     }
-    // 实现webpack-dev-middleware功能
+    // 3.实现webpack-dev-middleware功能 监听文件的改变并注册客户端可以访问的路由
     setupDevMiddleware() {
         let { compiler } = this;
 
@@ -79,9 +80,11 @@ class Server {
         }
         this.middleware = staticMiddleWare;// 将中间件挂载在this实例上，以便app使用
     }
+    // 创建服务端实例
     setupApp() {
         this.app = new express();
     }
+    // 将中间件添加在服务上
     routes() {
         let { compiler } = this;
         let config = compiler.options;
@@ -90,14 +93,17 @@ class Server {
     createServer() {
         this.server = http.createServer(this.app);
     }
+    // 4.创建websocket服务：建立本地服务和浏览器的双向通信；每当有新的编译，立马告知浏览器执行热更新逻辑
     createSocketServer() {
-        // 实现一个websocket长链接
+        // 实现一个websocket长链接 
         const io = socket(this.server);
         io.on("connection", (socket) => {
             console.log("a new client connect server");
 
             this.clientSocketList.push(socket);
+            // 监听关闭客户端
             socket.on("disconnect", () => {
+                console.log('disconnect')
                 let num = this.clientSocketList.indexOf(socket);
                 this.clientSocketList = this.clientSocketList.splice(num, 1);
             });

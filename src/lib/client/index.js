@@ -7,6 +7,11 @@ let currentHash;
 const URL = "/";
 const socket = io(URL);
 
+// 客户端主要分为两个关键点
+
+// 1.创建一个 websocket客户端 连接 websocket服务端，websocket客户端监听 hash 和 ok 事件
+// 2.主要的热更新客户端实现逻辑，浏览器会接收服务器端推送的消息，如果需要热更新，浏览器发起http请求去服务器端获取新的模块资源解析并局部刷新页面
+
 const onSocketMessage = {
     hash(hash) {
         console.log("hash",hash);

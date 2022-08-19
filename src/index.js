@@ -6,6 +6,7 @@ document.body.appendChild(divEl);
 
 let render = () => {
     let content = require("./content").default;
+    console.log('content',content)
     divEl.innerText = content;
 }
 render();

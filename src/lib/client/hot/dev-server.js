@@ -8,10 +8,12 @@ hotEmitter.on("webpackHotUpdate", (hash) => {
     if (!lastHash) {// 说明是第一次请求
         return lastHash = currentHash
     }
+    //如果不是第一次请求就请求HotModuleRepalcementPlugin生成的存储文件---hash值和模块对应的文件 
     hotCheck();
 })
 
 let hotCheck = () => {
+    // 获取完存储hash值的文件之后遍历拉取新的模块文件
     hotDownloadManifest().then(hotUpdate => {
         let chunkIdList = Object.keys(hotUpdate.c);
         // 循环更新的chunk，拉取新代码
@@ -24,7 +26,7 @@ let hotCheck = () => {
     });
 }
 
-// 向 server 端发送 Ajax 请求，包含了所有要更新的模块的 hash 值和chunk名
+// 获取存储hash值的
 let hotDownloadManifest = () => {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
@@ -60,7 +62,7 @@ let hotCreateModule = (moduleID) => {
     return hot;
 }
 
-// 补丁JS取回来后会调用webpackHotUpdate方法
+// HotModuleReplacementPlugin插件会调用window上的webpackHotUpdate函数
 window.webpackHotUpdate = (chunkID, moreModules) => {
     //循环新拉来的模块
     Object.keys(moreModules).forEach(moduleID => {
